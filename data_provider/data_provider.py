@@ -2,11 +2,15 @@ import MetaTrader5 as mt5
 import pandas as pd
 from typing import Dict
 from datetime import datetime
+from events.events import data_event
+from queue import Queue
+
 
 class data_provider():
-    def __init__(self,symbol_list:  list, timeframe ):
+    def __init__(self,events_queue : Queue, symbol_list:  list, timeframe: str ):
         self.symbols= symbol_list
         self.timeframe = timeframe
+        self.events_queue = events_queue
 
         #Guardamos un diccionario para guardar el datetime de la ultima vela que hemos visto para cada simbolo
         self.last_bar_datetime : Dict[str,datetime] = {symbol : datetime.min for symbol in self.symbols}
@@ -48,12 +52,12 @@ class data_provider():
         bars = mt5.copy_rates_from_pos(symbol,tf,from_position,bars_count)
         if bars is None:
             print("No se han podido cargar los datos")
-            bars = pd.Series()
+            bars = pd.DataFrame()
         else:
             bars=pd.DataFrame(bars)
-            bars=pd.to_datetime(bars['time'],unit='s')
+            bars['time'] = pd.to_datetime(bars['time'], unit='s')
             bars.set_index('time',inplace=True)
-            bars.rename({'tick_volume':"tickvol","real_volume":"vol"})
+            bars.rename(columns={'tick_volume': 'tickvol', 'real_volume': 'vol'}, inplace=True)
             bars=bars[['open','high','low','close','tickvol','vol','spread']]
 
         if bars.empty:
@@ -86,3 +90,12 @@ class data_provider():
             if not latest_bar.empty and latest_bar.iloc[-1].name > self.last_bar_datetime[symbol]:
                 
                 self.last_bar_datetime[symbol] = latest_bar.iloc[-1].name
+
+                #Hemos creado un evento y vamos a añadirlo a al cola de eventos
+                DataEvent = data_event(symbol=symbol,data=latest_bar.iloc[-1])
+
+                self.events_queue.put(DataEvent)
+
+
+
+
