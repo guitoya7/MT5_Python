@@ -1,5 +1,5 @@
 from ..Interfaces.signal_generator_interface import ISignalGenerator
-from events.events import data_event
+from events.events import data_event,signal_event
 from queue import Queue
 from data_provider.data_provider import data_provider
 import pandas as pd
@@ -18,9 +18,17 @@ class ma_crossover(ISignalGenerator):
             raise Exception("Slow period no es mayor al fast period, no tiene sentido")
 
     
-    def _create_and_put_signal_event(self,symbol : str, signal : str, target_order: str, price: float, strategic_id: int,sl: float,tp: float):
-        signal_event = signal_event(symbol=symbol,signal=signal,target_order=target_order,target_order =target_order,target_price = target_price,strategic_id : int,sl: float,tp: floa)
-
+    def _create_and_put_signal_event(self,symbol : str, signal : str, target_order: str, target_price: float, strategic_id: int,sl: float,tp: float) -> None:
+        
+        sgnl_event = signal_event(symbol=symbol,
+                                    signal=signal,
+                                    target_order=target_order,
+                                    target_price = target_price,
+                                    strategic_id = strategic_id,
+                                    sl = sl,
+                                    tp = tp)
+        #Colocamos el signal event en la cola de eventos
+        self.events_queue.put(sgnl_event)    
 
     
     def generate_signal(self, data_event: data_event) -> None:
@@ -43,6 +51,7 @@ class ma_crossover(ISignalGenerator):
             signal = ""
 
         if signal !="":
+                self._create_and_put_signal_event(symbol=symbol,signal=signal,target_order="MARKET",target_price=0.0,strategic_id=1234,sl=0.0,tp=0.0)
 
 
         

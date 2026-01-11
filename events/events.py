@@ -8,6 +8,7 @@ from pydantic import BaseModel
 class event_type(str,Enum):
     DATA = "DATA"
     SIGNAL = "SIGNAL"
+    SIZING = "SIZING"
 
 class base_event(BaseModel):
     EventType : event_type
@@ -40,3 +41,13 @@ class signal_event(base_event):
     tp: float
 
 
+class sizzing_event(base_event):
+    EventType: event_type = event_type.SIZING
+    symbol: str
+    signal: signal_type
+    target_order : order_type
+    target_price : float
+    strategic_id : int
+    sl: float
+    tp: float
+    volume : float
