@@ -7,5 +7,7 @@ class FixedSizinProps(BaseModel):
 
 class MinSizinProps(BaseModel):
     ...
-    
+
+class RiskPctSizinProps(BaseModel):
+    risk_pct: float
     
